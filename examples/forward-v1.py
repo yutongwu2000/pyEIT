@@ -1,16 +1,20 @@
-# coding: utf-8
-""" demo on forward 2D """
-# Copyright (c) Benyuan Liu. All Rights Reserved.
-# Distributed under the (new) BSD License. See LICENSE.txt for more info.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 15 14:42:47 2024
+
+@author: yutong
+"""
+
 from __future__ import absolute_import, division, print_function
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pyeit.eit.protocol as protocol
 import pyeit.mesh as mesh
 from pyeit.eit.fem import Forward
 from pyeit.mesh.shape import thorax
-# from pyeit.mesh.shape import rect
 from pyeit.mesh.wrapper import PyEITAnomaly_Circle
 from pyeit.eit.interp2d import sim2pts, pdegrad
 
@@ -18,9 +22,11 @@ from pyeit.eit.interp2d import sim2pts, pdegrad
 n_el = 4  # nb of electrodes
 use_customize_shape = True
 
+h0_def = 0.015
+
 if use_customize_shape:
     # Mesh shape is specified with fd parameter in the instantiation, e.g : fd=thorax
-    mesh_obj = mesh.create(n_el, h0=0.1, fd=thorax)
+    mesh_obj = mesh.create(n_el, h0=h0_def, fd=thorax)
 else:
     mesh_obj = mesh.create(n_el, h0=0.03)
 
@@ -33,7 +39,12 @@ x, y = pts[:, 0], pts[:, 1]
 mesh_obj.print_stats()
 
 # change permittivity
-anomaly = PyEITAnomaly_Circle(center=[0, -0.8], r=0.2, perm=100.0)
+cx_def = 0
+cy_def = -0.9
+center_def = [cx_def,cy_def]
+r_def = 0.15
+perm_def = 100
+anomaly = PyEITAnomaly_Circle(center=center_def, r=r_def, perm=perm_def)
 mesh_new = mesh.set_perm(mesh_obj, anomaly=anomaly, background=1.0)
 perm = mesh_new.perm
 
@@ -51,49 +62,70 @@ f = fwd.solve(ex_line)
 f = np.real(f)
 
 """ 2. plot """
-fig, ax1 = plt.subplots(figsize=(9, 6))
+fig, ax = plt.subplots(nrows=1, ncols=2)
+
 # draw equi-potential lines
-vf = np.linspace(min(f), max(f), 32)
+vf = np.linspace(min(f), max(f), 36)
+
 # vf = np.sort(f[el_pos])
 # Draw contour lines on an unstructured triangular grid.
-ax1.tricontour(x, y, tri, f, vf, cmap=plt.cm.viridis)
+ax[0].tricontour(x, y, tri, f, vf, cmap=plt.cm.viridis)
 
 # draw mesh structure
 # Create a pseudocolor plot of an unstructured triangular grid
-ax1.tripcolor(
+ax[0].tripcolor(
     x,
     y,
     tri,
     np.real(perm),
     edgecolors="k",
     shading="flat",
-    alpha=0.5,
+    alpha=0.05,
     cmap=plt.cm.Greys,
 )
+
 # draw electrodes
-ax1.plot(x[el_pos], y[el_pos], "ro")
+ax[0].plot(x[el_pos], y[el_pos], "ro")
 for i, e in enumerate(el_pos):
-    ax1.text(x[e], y[e], str(i + 1), size=12)
-ax1.set_title("equi-potential lines")
+    ax[0].text(x[e], y[e], str(i + 1), size=12)
+ax[0].set_title("Equipotential Lines")
 # clean up
-ax1.set_aspect("equal")
-ax1.set_ylim([-1.2, 1.2])
-ax1.set_xlim([-1.2, 1.2])
+ax[0].set_aspect("equal")
+ax[0].set_ylim([-1, 0.2])
+ax[0].set_xlim([-1, 1])
 fig.set_size_inches(6, 6)
-# fig.savefig('demo_bp.png', dpi=96)
-plt.show()
 
 ux, uy = pdegrad(pts, tri, f)
 uf = ux**2 + uy**2
 uf_pts = sim2pts(pts, tri, uf)
 uf_logpwr = 10 * np.log10(uf_pts)
 
-fig, ax = plt.subplots(figsize=(9, 6))
 # Draw contour lines on an unstructured triangular grid.
-ax.tripcolor(x, y, tri, uf_logpwr, cmap=plt.cm.viridis)
-ax.tricontour(x, y, tri, uf_logpwr, 10, cmap=plt.cm.hot)
-ax.set_aspect("equal")
-ax.set_ylim([-1.2, 1.2])
-ax.set_xlim([-1.2, 1.2])
-ax.set_title("E field (logmag)")
+ax[1].tripcolor(x, y, tri, uf_logpwr, cmap=plt.cm.viridis)
+ax[1].tricontour(x, y, tri, uf_logpwr, 10, cmap=plt.cm.hot)
+ax[1].set_aspect("equal")
+ax[1].set_ylim([-1, 0.2])
+ax[1].set_xlim([-1, 1])
+fig.set_size_inches(6, 6)
+ax[1].set_title("Electric Field")
 plt.show()
+
+fig.set_size_inches(16, 8)
+fig.savefig('results_ywu/sim_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.png' % (h0_def, cx_def, cy_def, r_def, perm_def), dpi=800)
+
+""" 3. calculate potential difference """
+
+# vdiff_23 = vf[18] - vf[17]
+# vdiff_14 = max(vf) - min(vf)
+
+# file1 = open("results_ywu/data_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.txt" % (h0_def, cx_def, cy_def, r_def, perm_def), "w") 
+# str_vdiff_23 = '%f' % vdiff_23
+# str_vdiff_14 = '%f' % vdiff_14
+# L = [str_vdiff_23, '\n', str_vdiff_14]
+# file1.writelines(L)
+# file1.close()
+
+dvf = pd.DataFrame(vf)
+dvf.to_csv("results_ywu/vf_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.csv" % (h0_def, cx_def, cy_def, r_def, perm_def))
+
+
