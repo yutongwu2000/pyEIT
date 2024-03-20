@@ -19,7 +19,7 @@ from pyeit.mesh.shape import thorax
 from pyeit.mesh.wrapper import PyEITAnomaly_Circle
 from pyeit.eit.interp2d import sim2pts, pdegrad
 
-my_path = os.path.abspath('pyEIT-results')
+my_path = os.path.abspath('/Users/yutong/pyEIT-results/')
 
 """ 0. build mesh """
 n_el = 4  # nb of electrodes
@@ -44,11 +44,11 @@ mesh_obj.print_stats()
 
 # change permittivity
 cx_def = 0
-cy_def = -0.7
+cy_def = -0.9
 r_def = 0.15
 perm_def = 100
 
-while (cy_def <= -0.6):
+while (cy_def <= -0.8):
     
     center_def = [cx_def,cy_def]
     anomaly = PyEITAnomaly_Circle(center=center_def, r=r_def, perm=perm_def)
@@ -133,9 +133,9 @@ while (cy_def <= -0.6):
     # file1.close()
     
     dvf = pd.DataFrame(vf)
-    dvf.to_csv(my_path + 'vf_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.csv' % (h0_def, cx_def, cy_def, r_def, perm_def))
+    dvf.to_csv(my_path + '/vf_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.csv' % (h0_def, cx_def, cy_def, r_def, perm_def))
 
 
-    cy_def = cy_def + 0.02
+    cy_def = cy_def + 0.1
 
 
