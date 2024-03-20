@@ -19,7 +19,7 @@ from pyeit.mesh.shape import thorax
 from pyeit.mesh.wrapper import PyEITAnomaly_Circle
 from pyeit.eit.interp2d import sim2pts, pdegrad
 
-my_path = os.path.abspath('/Users/yutong/pyEIT-results/')
+my_path = os.path.abspath('/Users/yutong/pyEIT-results')
 
 """ 0. build mesh """
 n_el = 4  # nb of electrodes
@@ -118,7 +118,7 @@ while (cy_def <= -0.8):
     # plt.show()
     
     fig.set_size_inches(16, 8)
-    fig.savefig(my_path + 'sim_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.png' % (h0_def, cx_def, cy_def, r_def, perm_def), dpi=800)
+    fig.savefig(my_path + '/sim_h%.3f_cx%.2f_cy%.2f_r%.2f_perm%.0f.png' % (h0_def, cx_def, cy_def, r_def, perm_def), dpi=800)
     
     # """ 3. calculate potential difference """
     
